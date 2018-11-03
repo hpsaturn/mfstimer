@@ -28,8 +28,8 @@ MFShield mfs;
 boolean countdown = false;	// countdown flag variable
 uint16_t counter = DEFAULT_INTERVAL;	// countdown value
 uint32_t t;	// a variable for non blocking loop, using millis()
-uint8_t sec;
-uint8_t min;
+int sec = counter;
+int min = 0;
 
 /* ~~~~~~~~~~~~ LOOPED ALARM ROUTINE ~~~~~~~~~~~~~~~~ */
 void alarm (const uint32_t period_ms, const uint32_t timeout_ms)
@@ -69,7 +69,7 @@ void calcMinSec ()
   }
 
   if ( sec < 0 ) {
-    min--;
+    if (min>0) min--;
     sec=59;
   }
 
