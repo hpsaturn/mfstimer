@@ -70,12 +70,8 @@ void calcMinSec ()
 
   if ( sec < 0 ) {
     if (min>0) min--;
-    sec=59;
-  }
-
-  if ( min < 0 ) {
-    sec = 59;
-    min = 0;
+    if(sec==-30)sec=30;
+    else sec=59;
   }
 
 	min = constrain (min, 0, 99);	// limit minutes
