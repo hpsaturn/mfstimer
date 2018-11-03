@@ -8,7 +8,7 @@
 
 // timer configuration settings
 #define DEFAULT_INTERVAL			30
-#define TIMER_STEP						5
+#define TIMER_STEP						30
 #define TIMER_VALUE_MIN				5
 #define TIMER_VALUE_MAX				600
 
@@ -28,7 +28,8 @@ MFShield mfs;
 boolean countdown = false;	// countdown flag variable
 uint16_t counter = DEFAULT_INTERVAL;	// countdown value
 uint32_t t;	// a variable for non blocking loop, using millis()
-
+uint8_t sec;
+uint8_t min;
 
 /* ~~~~~~~~~~~~ LOOPED ALARM ROUTINE ~~~~~~~~~~~~~~~~ */
 void alarm (const uint32_t period_ms, const uint32_t timeout_ms)
@@ -59,6 +60,31 @@ void alarm (const uint32_t period_ms, const uint32_t timeout_ms)
 }
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+/* ========== REFRESH MIN AND SEC FUNCTION ============ */
+void calcMinSec ()
+{
+  if ( sec == 60 ) {
+    min++;
+    sec=0;
+  }
+
+  if ( sec < 0 ) {
+    min--;
+    sec=59;
+  }
+
+  if ( min < 0 ) {
+    sec = 59;
+    min = 0;
+  }
+
+	min = constrain (min, 0, 99);	// limit minutes
+
+  counter = (min*100)+sec;
+
+	mfs.display(counter, DISPLAY_LEADING_ZERO); // update numeric value on lcd
+}
+
 /* ============= BUTTONS HANDLER FUNCTION ============= */
 void keyAction (uint8_t key)
 {
@@ -68,11 +94,11 @@ void keyAction (uint8_t key)
 	switch (key)
 	{
 		case BUTTON_PLUS:
-			counter += TIMER_STEP;
+			sec += TIMER_STEP;
 			break;
 
 		case BUTTON_MINUS:
-			counter -= TIMER_STEP;
+			sec -= TIMER_STEP;
 			break;
 
 		case BUTTON_START:
@@ -80,10 +106,11 @@ void keyAction (uint8_t key)
 			t = millis();
 			break;
 	}
-	counter = constrain (counter, TIMER_VALUE_MIN, TIMER_VALUE_MAX);	// limit counter range between these values (see definitions)
-	if (ENABLE_BUTTON_SOUND)	// make button sound if enabled
-		mfs.beep(5);
-	mfs.display(counter, DISPLAY_LEADING_ZERO);			// update counter value on display
+	
+  if (ENABLE_BUTTON_SOUND) mfs.beep(5); // make button sound if enabled 
+
+  calcMinSec();
+
 }
 /* =================================================== */
 
@@ -112,9 +139,9 @@ void loop()
 		t = millis();
 		
 		// while counter is not 0, decrement it
-		if (counter > 0)
+		if (min >0 || sec > 0)
 		{
-			counter--;	// decrement counter value
+			sec--;	// decrement sec value
 		  mfs.setLed (1, !mfs.getLed(1)); // blink onboard led
 			if (ENABLE_TICK_SOUND)	// make tick sound if enabled
 				mfs.beep (1);
@@ -124,6 +151,7 @@ void loop()
 		else
 			alarm(ALARM_PERIOD_MS, ALARM_TIMEOUT_MS);
 
-		mfs.display(counter, DISPLAY_LEADING_ZERO); // update numeric value on lcd
+    calcMinSec();
+ 
 	}
 }
