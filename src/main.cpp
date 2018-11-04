@@ -26,78 +26,77 @@ void display (char min, char sec){
   MFS.write((float)((minutes*100 + seconds)/100.0),2);
 }
 
+void checkStopConditions(byte btn) {
+
+  if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0) {
+    countDownMode = COUNTING; // start the timer
+  }
+  else if (btn == BUTTON_1_LONG_PRESSED) {
+    tenths  = 0; // reset the timer
+    seconds = 0;
+    minutes = 0;
+  }
+  else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED) {
+    minutes++;
+    if (minutes > 60) minutes = 0;
+  }
+  else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED) {
+    seconds += 10; // continue counting down
+    if (seconds >= 60) seconds = 0;
+  }
+
+}
+
+void checkCountDownConditions (byte btn) {
+
+  if (btn == BUTTON_1_SHORT_RELEASE || btn == BUTTON_1_LONG_RELEASE) {
+    countDownMode = COUNTING_STOPPED; // stop the timer
+  }
+  else { 
+
+    tenths++; // continue counting down
+
+    if (tenths == 10) {
+
+      tenths = 0;
+      seconds--;
+
+      if (seconds < 0 && minutes > 0) {
+        seconds = 59;
+        minutes--;
+      }
+
+      if (minutes == 0 && seconds == 0) {
+        // timer has reached 0, so sound the alarm
+        MFS.beep(50, 50, 3);  // beep 3 times, 500 milliseconds on / 500 off
+        countDownMode = COUNTING_STOPPED;
+      }
+
+    }
+
+    delay(100);
+
+  }
+
+}
+
 void loop() {
-  // put your main code here, to run repeatedly:
 
   byte btn = MFS.getButton();
   
   switch (countDownMode)
   {
     case COUNTING_STOPPED:
-        if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0)
-        {
-          countDownMode = COUNTING; // start the timer
-        }
-        else if (btn == BUTTON_1_LONG_PRESSED)
-        {
-          tenths  = 0; // reset the timer
-          seconds = 0;
-          minutes = 0;
-        }
-        else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED)
-        {
-          minutes++;
-          if (minutes > 60)
-          {
-            minutes = 0;
-          }
-        }
-        else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED)
-        {
-          seconds += 10; // continue counting down
-          if (seconds >= 60)
-          {
-            seconds = 0;
-          }
-        }
-
+        checkStopConditions(btn);
         MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4);
-        display(minutes,seconds);
         break;
         
     case COUNTING:
-        if (btn == BUTTON_1_SHORT_RELEASE || btn == BUTTON_1_LONG_RELEASE)
-        {
-          countDownMode = COUNTING_STOPPED; // stop the timer
-        }
-        else
-        { 
-          MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4, OFF);
-
-          tenths++; // continue counting down
-          
-          if (tenths == 10)
-          {
-            tenths = 0;
-            seconds--;
-            
-            if (seconds < 0 && minutes > 0)
-            {
-              seconds = 59;
-              minutes--;
-            }
-            
-            if (minutes == 0 && seconds == 0)
-            {
-              // timer has reached 0, so sound the alarm
-              MFS.beep(50, 50, 3);  // beep 3 times, 500 milliseconds on / 500 off
-              countDownMode = COUNTING_STOPPED;
-            }
-            
-            display(minutes,seconds);
-          }
-          delay(100);
-        }
+        MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4, OFF);
+        checkCountDownConditions(btn);
         break;
   }
+
+  display(minutes,seconds);
+
 }
