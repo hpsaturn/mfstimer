@@ -2,6 +2,8 @@
 #include <Wire.h>
 #include <MultiFuncShield.h>
 
+#define TIMER_VALUE_MAX 99
+
 enum CountDownModeValues
 {
   COUNTING_STOPPED,
@@ -38,7 +40,7 @@ void checkStopConditions(byte btn) {
   }
   else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED) {
     minutes++;
-    if (minutes > 60) minutes = 0;
+    if (minutes > TIMER_VALUE_MAX) minutes = 0;
   }
   else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED) {
     seconds += 10; // continue counting down
@@ -92,8 +94,8 @@ void loop() {
         break;
         
     case COUNTING:
-        MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4, OFF);
         checkCountDownConditions(btn);
+        MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4, OFF);
         break;
   }
 
