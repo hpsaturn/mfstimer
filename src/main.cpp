@@ -1,153 +1,104 @@
-#include <MFShield.h>
+#include <TimerOne.h>
+#include <Wire.h>
+#include <MultiFuncShield.h>
 
-/* ======== USER SETTINGS =========== */
-// special effects
-#define ENABLE_TICK_SOUND				false
-#define ENABLE_BUTTON_SOUND			true
-#define DISPLAY_LEADING_ZERO		true
 
-// timer configuration settings
-#define DEFAULT_INTERVAL			30
-#define TIMER_STEP						30
-#define TIMER_VALUE_MIN				5
-#define TIMER_VALUE_MAX				600
-
-// alarm settings
-#define ALARM_PERIOD_MS				500
-#define ALARM_TIMEOUT_MS			10000
-
-// button assignment settings
-#define BUTTON_START	3
-#define BUTTON_PLUS		2
-#define BUTTON_MINUS	1
-
-/* ================================== */
-
-MFShield mfs;
-
-boolean countdown = false;	// countdown flag variable
-uint16_t counter = DEFAULT_INTERVAL;	// countdown value
-uint32_t t;	// a variable for non blocking loop, using millis()
-int sec = counter;
-int min = 0;
-
-/* ~~~~~~~~~~~~ LOOPED ALARM ROUTINE ~~~~~~~~~~~~~~~~ */
-void alarm (const uint32_t period_ms, const uint32_t timeout_ms)
+enum CountDownModeValues
 {
-	uint32_t t_alarm = 0;	// make a counter variable for non blocking loop
-	uint32_t alarm_timeout = millis() + timeout_ms;	// set alarm timeout
-	while (true)
-	{
-		boolean blink = mfs.getLed(1);
-		
-		if (millis() - t_alarm >= period_ms)
-		{		// non blocking loop: run this code once every <period_ms>
-			t_alarm = millis();
-			mfs.setLed(1, !blink);			// blink led
-			mfs.showDisplay(!blink);		// blink display
-			mfs.beep (period_ms / 2);
-		}
+  COUNTING_STOPPED,
+  COUNTING
+};
 
-		// stop alarm after timeout and return into setup mode
-		if (millis() > alarm_timeout)
-		{
-			counter = DEFAULT_INTERVAL;
-			countdown = false;
-			return;
-		}
-		mfs.loop();
-	}
+byte countDownMode = COUNTING_STOPPED;
+
+byte tenths = 0;
+char seconds = 0;
+char minutes = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Timer1.initialize();
+  MFS.initialize(&Timer1);    // initialize multifunction shield library
+  MFS.write(0);
+  
+  Serial.begin(9600);
 }
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-/* ========== REFRESH MIN AND SEC FUNCTION ============ */
-void calcMinSec ()
-{
-  if ( sec == 60 ) {
-    min++;
-    sec=0;
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  byte btn = MFS.getButton();
+  
+  switch (countDownMode)
+  {
+    case COUNTING_STOPPED:
+        if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0)
+        {
+          // start the timer
+          countDownMode = COUNTING;
+        }
+        else if (btn == BUTTON_1_LONG_PRESSED)
+        {
+          // reset the timer
+          tenths = 0;
+          seconds = 0;
+          minutes = 0;
+          MFS.write(minutes*100 + seconds);
+        }
+        else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED)
+        {
+          minutes++;
+          if (minutes > 60)
+          {
+            minutes = 0;
+          }
+          MFS.write(minutes*100 + seconds);
+        }
+        else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED)
+        {
+          seconds += 10;
+          if (seconds >= 60)
+          {
+            seconds = 0;
+          }
+          MFS.write(minutes*100 + seconds);
+        }
+        break;
+        
+    case COUNTING:
+        if (btn == BUTTON_1_SHORT_RELEASE || btn == BUTTON_1_LONG_RELEASE)
+        {
+          // stop the timer
+          countDownMode = COUNTING_STOPPED;
+        }
+        else
+        {
+          // continue counting down
+          tenths++;
+          
+          if (tenths == 10)
+          {
+            tenths = 0;
+            seconds--;
+            
+            if (seconds < 0 && minutes > 0)
+            {
+              seconds = 59;
+              minutes--;
+            }
+            
+            if (minutes == 0 && seconds == 0)
+            {
+              // timer has reached 0, so sound the alarm
+              MFS.beep(50, 50, 3);  // beep 3 times, 500 milliseconds on / 500 off
+              countDownMode = COUNTING_STOPPED;
+            }
+            
+            MFS.write(minutes*100 + seconds);
+          }
+          delay(100);
+        }
+        break;
   }
-
-  if ( sec < 0 ) {
-    if (min>0) min--;
-    if(sec==-30)sec=30;
-    else sec=59;
-  }
-
-	min = constrain (min, 0, 99);	// limit minutes
-
-  counter = (min*100)+sec;
-
-	mfs.display(counter, DISPLAY_LEADING_ZERO); // update numeric value on lcd
-}
-
-/* ============= BUTTONS HANDLER FUNCTION ============= */
-void keyAction (uint8_t key)
-{
-	if (countdown)
-		return;    // do nothing if the countdown has begun
-	
-	switch (key)
-	{
-		case BUTTON_PLUS:
-			sec += TIMER_STEP;
-			break;
-
-		case BUTTON_MINUS:
-			sec -= TIMER_STEP;
-			break;
-
-		case BUTTON_START:
-			countdown = true;
-			t = millis();
-			break;
-	}
-	
-  if (ENABLE_BUTTON_SOUND) mfs.beep(5); // make button sound if enabled 
-
-  calcMinSec();
-
-}
-/* =================================================== */
-
-void setup()
-{
-	mfs.display(counter, DISPLAY_LEADING_ZERO);		
-	// assign handler function for buttons (see above)
-	mfs.onKeyPress (keyAction);
-}
-
-void loop()
-{
-	mfs.loop();
-	
-	if (!countdown)
-	{
-		// we're in setup mode
-		mfs.showDisplay (millis()/30 %2); // blink numeric display rapidly
-		return;		// quit here
-	}
-	
-	// else run countdown:
-	// run this code once every 1000 msec (1 sec.)
-	if (millis() - t >= 1000)
-	{
-		t = millis();
-		
-		// while counter is not 0, decrement it
-		if (min >0 || sec > 0)
-		{
-			sec--;	// decrement sec value
-		  mfs.setLed (1, !mfs.getLed(1)); // blink onboard led
-			if (ENABLE_TICK_SOUND)	// make tick sound if enabled
-				mfs.beep (1);
-		}
-
-		// once counter become zero, trigger the alarm
-		else
-			alarm(ALARM_PERIOD_MS, ALARM_TIMEOUT_MS);
-
-    calcMinSec();
- 
-	}
 }
