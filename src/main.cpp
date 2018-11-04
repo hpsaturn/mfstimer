@@ -24,6 +24,10 @@ void setup() {
   Serial.begin(9600);
 }
 
+void display (char min, char sec){
+  MFS.write((float)((minutes*100 + seconds)/100.0),2);
+}
+
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -44,7 +48,8 @@ void loop() {
           tenths = 0;
           seconds = 0;
           minutes = 0;
-          MFS.write(minutes*100 + seconds);
+
+          display(minutes,seconds);
         }
         else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED)
         {
@@ -53,7 +58,7 @@ void loop() {
           {
             minutes = 0;
           }
-          MFS.write(minutes*100 + seconds);
+          display(minutes,seconds);
         }
         else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED)
         {
@@ -62,7 +67,7 @@ void loop() {
           {
             seconds = 0;
           }
-          MFS.write(minutes*100 + seconds);
+          display(minutes,seconds);
         }
         break;
         
@@ -95,7 +100,7 @@ void loop() {
               countDownMode = COUNTING_STOPPED;
             }
             
-            MFS.write(minutes*100 + seconds);
+            display(minutes,seconds);
           }
           delay(100);
         }
