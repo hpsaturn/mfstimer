@@ -60,6 +60,8 @@ void loop() {
             seconds = 0;
           }
         }
+
+        MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4);
         display(minutes,seconds);
         break;
         
@@ -70,6 +72,8 @@ void loop() {
         }
         else
         { 
+          MFS.blinkDisplay(DIGIT_1 | DIGIT_2 | DIGIT_3 | DIGIT_4, OFF);
+
           tenths++; // continue counting down
           
           if (tenths == 10)
