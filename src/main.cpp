@@ -31,19 +31,6 @@ void loadTimer() {
   }
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  Timer1.initialize();
-  MFS.initialize(&Timer1);    // initialize multifunction shield library
-  MFS.write(0);
-  loadTimer();
-}
-
-void display (char min, char sec){
-  // display minutes and seconds sepated with a point
-  MFS.write((float)((minutes*100 + seconds)/100.0),2);
-}
-
 void checkStopConditions(byte btn) {
 
   if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0) {
@@ -100,6 +87,19 @@ void checkCountDownConditions (byte btn) {
 
   }
 
+}
+
+void display (char min, char sec){
+  // display minutes and seconds sepated with a point
+  MFS.write((float)((minutes*100 + seconds)/100.0),2);
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  Timer1.initialize();
+  MFS.initialize(&Timer1);    // initialize multifunction shield library
+  MFS.write(0);
+  loadTimer();
 }
 
 void loop() {
