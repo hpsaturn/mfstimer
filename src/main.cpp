@@ -32,11 +32,13 @@ void checkStopConditions(byte btn) {
 
   if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0) {
     countDownMode = COUNTING; // start the timer
+    MFS.beep(6, 2, 3);  // beep 3 times, 600 milliseconds on / 200 off
   }
   else if (btn == BUTTON_1_LONG_PRESSED) {
     tenths  = 0; // reset the timer
     seconds = 0;
     minutes = 0;
+    MFS.beep(8, 10, 1);  // beep 1 times, 800 milliseconds on / 1000 off
   }
   else if (btn == BUTTON_2_PRESSED || btn == BUTTON_2_LONG_PRESSED) {
     minutes++;
@@ -53,6 +55,7 @@ void checkCountDownConditions (byte btn) {
 
   if (btn == BUTTON_1_SHORT_RELEASE || btn == BUTTON_1_LONG_RELEASE) {
     countDownMode = COUNTING_STOPPED; // stop the timer
+    MFS.beep(6, 2, 2);  // beep 6 times, 200 milliseconds on / 200 off
   }
   else { 
 
