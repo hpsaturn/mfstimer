@@ -1,5 +1,6 @@
 #include <TimerOne.h>
 #include <Wire.h>
+#include <EEPROMex.h>
 #include <MultiFuncShield.h>
 
 #define TIMER_VALUE_MAX 99
@@ -16,11 +17,26 @@ byte tenths = 0;
 char seconds = 0;
 char minutes = 0;
 
+void saveTimer(char minutes, char seconds) {
+  EEPROM.writeByte(0, seconds);
+  EEPROM.writeByte(sizeof(byte), minutes);
+}
+
+void loadTimer() {
+  seconds = EEPROM.readByte(0);
+  minutes = EEPROM.readByte(sizeof(byte));
+  if((seconds+minutes)<0){
+    seconds=0;
+    minutes=0;
+  }
+}
+
 void setup() {
   // put your setup code here, to run once:
   Timer1.initialize();
   MFS.initialize(&Timer1);    // initialize multifunction shield library
   MFS.write(0);
+  loadTimer();
 }
 
 void display (char min, char sec){
@@ -33,6 +49,7 @@ void checkStopConditions(byte btn) {
   if (btn == BUTTON_1_SHORT_RELEASE && (minutes + seconds) > 0) {
     countDownMode = COUNTING; // start the timer
     MFS.beep(6, 2, 3);  // beep 3 times, 600 milliseconds on / 200 off
+    saveTimer(minutes,seconds);
   }
   else if (btn == BUTTON_1_LONG_PRESSED) {
     tenths  = 0; // reset the timer
