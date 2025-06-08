@@ -1,7 +1,7 @@
 #include <TimerOne.h>
 #include <Wire.h>
 #include <EEPROMex.h>
-#include <MultiFuncShield.h>
+#include "MultiFuncShield.h" 
 
 #define TIMER_VALUE_MAX 99
 
@@ -49,7 +49,7 @@ void checkStopConditions(byte btn) {
     if (minutes > TIMER_VALUE_MAX) minutes = 0;
   }
   else if (btn == BUTTON_3_PRESSED || btn == BUTTON_3_LONG_PRESSED) {
-    seconds += 10; // continue counting down
+    seconds += 1; // continue counting down
     if (seconds >= 60) seconds = 0;
   }
 
@@ -97,7 +97,8 @@ void display (char min, char sec){
 void setup() {
   // put your setup code here, to run once:
   Timer1.initialize();
-  MFS.initialize(&Timer1);    // initialize multifunction shield library
+  MFS.initialize(&Timer1);     // initialize multifunction shield library
+  MFS.setDisplayBrightness(3); // set display brightness to 3 (0-7)
   MFS.write(0);
   loadTimer();
 }
